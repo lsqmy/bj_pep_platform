@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.RoleRightDAO">
+    <resultMap id="RoleRightResultMap" type="araFwRoleRight">
+        <id column="fID" property="fID"/>
+        <result column="fRoleID" property="fRoleID"/>
+        <result column="fRightID" property="fRightID"/>
+        <result column="fMainMenuItemID" property="fMainMenuItemID"/>
+        <result column="fCreatorID" property="fCreatorID"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime"/>
+        <result column="fIsInit" property="fIsInit"/>
+        <!--关联user表查询出用户名-->
+        <result column="fCreatorName" property="fCreatorName"/>
+        <result column="fLastUpdateUserName" property="fLastUpdateUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fRoleID, fRightID, fMainMenuItemID, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime, fIsInit
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fRoleID, t.fRightID, t.fMainMenuItemID, t.fCreatorID, t.fCreateTime, t.fLastUpdateUserID, t.fLastUpdateTime, t.fIsInit
+    </sql>
+
+
+
+    <select id="selectRoleRightList" resultMap="RoleRightResultMap" parameterType="araFwRoleRight">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from t_bd_rolerights t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        left join t_bd_menurights t3 on t3.fID = t.fRightID
+        <trim prefix="where" prefixOverrides="and">
+            <if test="fRoleID != null and fRoleID != ''">
+                and t.fRoleID = #{fRoleID}
+            </if>
+            <if test="fNumber != null and fNumber != ''">
+                and t.fNumber = #{fNumber}
+            </if>
+            <if test="fDescription != null and fDescription != ''">
+                and t.fDescription like concat(concat('%',#{fDescription}),'%')
+            </if>
+            <if test="fStatus != null and fStatus != ''">
+                and t.fStatus = #{fStatus}
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectRoleRightList" resultMap="RoleRightResultMap" parameterType="araFwRoleRight" databaseId="sqlserver">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from t_bd_rolerights t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        left join t_bd_menurights t3 on t3.fID = t.fRightID
+        <trim prefix="where" prefixOverrides="and">
+            <if test="fRoleID != null and fRoleID != ''">
+                and t.fRoleID = #{fRoleID}
+            </if>
+            <if test="fNumber != null and fNumber != ''">
+                and t.fNumber = #{fNumber}
+            </if>
+            <if test="fDescription != null and fDescription != ''">
+                and t.fDescription like '%'+#{fDescription}+'%'
+            </if>
+            <if test="fStatus != null and fStatus != ''">
+                and t.fStatus = #{fStatus}
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectInitRightIDListByRoleID" resultType="java.lang.String">
+        select fRightID from t_bd_rolerights where fRoleID = #{roleID} and fIsInit = 1
+    </select>
+
+    <insert id="insertRoleRightBatch">
+        <foreach collection="list" item="item" index="index" separator=";">
+            insert into t_bd_rolerights (
+            <include refid="Base_Column_List"/>
+            ) values (
+            #{item.fID},#{item.fRoleID},#{item.fRightID},#{item.fMainMenuItemID},
+            #{item.fCreatorID},#{item.fCreateTime},#{item.fLastUpdateUserID},#{item.fLastUpdateTime}
+            ,0
+            )
+        </foreach>
+    </insert>
+
+    <insert id="insertRoleRightBatch" databaseId="oracle">
+        begin
+        <foreach collection="list" item="item" index="index" separator=";">
+            insert into t_bd_rolerights (
+            <include refid="Base_Column_List"/>
+            ) values (
+            #{item.fID},#{item.fRoleID},#{item.fRightID},#{item.fMainMenuItemID},
+            #{item.fCreatorID},#{item.fCreateTime},#{item.fLastUpdateUserID},#{item.fLastUpdateTime}
+            ,0
+            )
+        </foreach>
+        ;end;
+    </insert>
+
+    <delete id="deleteRoleRightByRoleID">
+        delete from t_bd_rolerights where fRoleID = #{roleID} and fIsInit = 0
+    </delete>
+
+    <delete id="deleteRoleRightBatch">
+        delete from t_bd_rolerights where fID in
+        <foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        and fIsInit = 0
+    </delete>
+
+</mapper>

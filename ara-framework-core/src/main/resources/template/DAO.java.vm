@@ -1,0 +1,20 @@
+package com.aratek.framework.core.dao;
+
+import com.aratek.framework.domain.base.mapper.BaseDAO;
+import com.aratek.framework.domain.core.${className};
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+import java.util.Set;
+
+/**
+ * @author ${author}
+ * @date ${datetime}
+ * @description DAO
+ */
+public interface ${className}DAO extends BaseDAO<${className}> {
+
+    List<${className}> selectList(${className} ${objectName});
+
+
+}

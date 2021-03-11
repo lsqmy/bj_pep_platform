@@ -1,0 +1,30 @@
+package com.aratek.framework.core.service;
+
+
+import com.aratek.framework.domain.core.${className};
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * ${comments}
+ *
+ * @author ${author}
+ * @date ${datetime}
+ */
+public interface ${className}Service {
+
+    ${className} queryObject(${pk.attrType} ${pk.attrname});
+
+    List<${className}> selectList(${className} ${objectName});
+
+    Map insert(${className} ${objectName});
+
+    Map update(${className} ${objectName});
+
+    Map updateBatch(List<${className}> ${objectName}List);
+
+    Map delete(${pk.attrType} ${pk.attrname});
+
+    Map deleteBatch(List<${pk.attrType}> ${pk.attrname}List);
+}

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.AppInfoWhiteRuleDAO">
+
+    <resultMap id="AppInfoWhiteRuleResultMap" type="araFwAppInfoWhiteRule">
+        <id column="fID" property="fID"/>
+        <result column="fAppID" property="fAppID"/>
+        <result column="fWhiteType" property="fWhiteType"/>
+        <result column="fCheckType" property="fCheckType"/>
+        <result column="fValueOne" property="fValueOne"/>
+        <result column="fValueTwo" property="fValueTwo"/>
+        <result column="fStatus" property="fStatus"/>
+        <result column="fDescription" property="fDescription"/>
+        <result column="fCreatorID" property="fCreatorID"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime"/>
+        <!--关联user表查询出用户名-->
+        <result column="fCreatorName" property="fCreatorName"/>
+        <result column="fLastUpdateUserName" property="fLastUpdateUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fAppID, fWhiteType, fCheckType, fValueOne, fValueTwo, fStatus, fDescription, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fAppID, t.fWhiteType, t.fCheckType, t.fValueOne, t.fValueTwo, t.fStatus, t.fDescription, t.fCreatorID, t.fCreateTime, t.fLastUpdateUserID, t.fLastUpdateTime
+    </sql>
+
+
+
+    <select id="selectAppInfoWhiteRuleList" resultMap="AppInfoWhiteRuleResultMap">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from t_bd_appinfowhiterule t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        <where>
+            <if test="fAppID != null and fAppID != ''">
+                and t.fAppID = #{fAppID}
+            </if>
+            <if test="fWhiteType != null and fWhiteType != ''">
+                and t.fWhiteType = #{fWhiteType}
+            </if>
+            <if test="fCheckType != null and fCheckType != ''">
+                and t.fCheckType = #{fCheckType}
+            </if>
+            <if test="queryCreateTimeStart != null">
+                and t.fCreateTime >= #{queryCreateTimeStart}
+            </if>
+            <if test="queryCreateTimeEnd != null">
+                <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+                ]]>
+            </if>
+            <if test="queryUpdateTimeStart != null">
+                and t.fLastUpdateTime >= #{queryUpdateTimeStart}
+            </if>
+            <if test="queryUpdateTimeEnd != null">
+                <![CDATA[
+                and t.fLastUpdateTime <= #{queryUpdateTimeEnd}
+                ]]>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertAppInfoWhiteRule">
+        insert into t_bd_appinfowhiterule (
+        <include refid="Base_Column_List"/>
+        ) values (
+        #{fID},
+        #{fAppID},
+        #{fWhiteType},
+        #{fCheckType},
+        #{fValueOne},
+        #{fValueTwo},
+        #{fStatus},
+        #{fDescription},
+        #{currentUserID},
+        #{currentUserOperationTime},
+        #{currentUserID},
+        #{currentUserOperationTime}
+        )
+    </insert>
+
+    <update id="updateAppInfoWhiteRule">
+        update t_bd_appinfowhiterule set
+            fWhiteType = #{fWhiteType},
+            fCheckType = #{fCheckType},
+            fValueOne = #{fValueOne},
+            fValueTwo = #{fValueTwo},
+            fDescription = #{fDescription},
+            fLastUpdateUserID = #{currentUserID},
+            fLastUpdateTime = #{currentUserOperationTime}
+        where fID = #{fID}
+    </update>
+
+    <update id="updateAppInfoWhiteRuleStatusBatch" parameterType="list">
+        <foreach collection="list" index="index" item="item" separator=";">
+            update t_bd_appinfowhiterule
+            set fStatus = #{item.fStatus}
+            ,fLastUpdateUserID = #{item.currentUserID}
+            ,fLastUpdateTime = #{item.currentUserOperationTime}
+            where fID = #{item.fID}
+        </foreach>
+    </update>
+
+    <update id="updateAppInfoWhiteRuleStatusBatch" parameterType="list" databaseId="oracle">
+        <foreach collection="list" index="index" item="item" open="begin" close=";end;" separator=";">
+            update t_bd_appinfowhiterule
+            set fStatus = #{item.fStatus}
+            ,fLastUpdateUserID = #{item.currentUserID}
+            ,fLastUpdateTime = #{item.currentUserOperationTime}
+            where fID = #{item.fID}
+        </foreach>
+    </update>
+
+    <delete id="deleteAppInfoWhiteRuleBatch">
+        delete from t_bd_appinfowhiterule where fID in
+        <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+
+</mapper>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.MailDAO">
+
+    <sql id="Base_Column_List">
+        fID ,fBatchID ,fUserID ,fMailFrom ,fMailTo ,fWCC ,fBCC ,fSubject ,fStatus ,fSendTime
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID ,t.fBatchID ,t.fUserID ,t.fMailFrom ,t.fMailTo ,t.fWCC ,t.fBCC ,t.fSubject ,t.fStatus ,t.fSendTime
+    </sql>
+
+    <insert id="insertEmailLog">
+        insert into t_bd_mailsend (
+        <include refid="Base_Column_List"/>
+        ) values (
+        #{fID},
+        #{fBatchID},
+        #{fUserID},
+        #{fMailFrom},
+        #{fMailTo},
+        #{fWCC},
+        #{fBCC},
+        #{fSubject},
+        #{fStatus},
+        #{fSendTime}
+        )
+    </insert>
+
+    <update id="updateEmailLogStatus">
+        update t_bd_mailsend set fStatus = #{fStatus} where fID = #{fID}
+    </update>
+
+
+</mapper>

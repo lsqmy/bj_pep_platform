@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.UserRoleDAO">
+    <resultMap id="UserRoleResultMap" type="araFwUserRole">
+        <id column="fID" property="fID"/>
+        <result column="fUserID" property="fUserID"/>
+        <result column="fRoleID" property="fRoleID"/>
+        <result column="fCreatorID" property="fCreatorID"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime"/>
+        <result column="fIsInit" property="fIsInit"/>
+        <!--关联user表查询出用户名-->
+        <result column="fCreatorName" property="fCreatorName"/>
+        <result column="fLastUpdateUserName" property="fLastUpdateUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fUserID, fRoleID, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime, fIsInit
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fUserID, t.fRoleID, t.fCreatorID, t.fCreateTime, t.fLastUpdateUserID, t.fLastUpdateTime, t.fIsInit
+    </sql>
+
+    <select id="selectInitUserIDListByRoleID" resultType="java.lang.String">
+        select fUserID from t_bd_userrole where fRoleID = #{roleID} and fIsInit = 1
+    </select>
+
+    <select id="selectInitRoleIDListByUserID" resultType="java.lang.String">
+        select fRoleID from t_bd_userrole where fUserID = #{userID} and fIsInit = 1
+    </select>
+
+    <insert id="insertRoleUserBatch" databaseId="mysql">
+        <foreach collection="list" index="index" item="item" separator=";">
+        insert into t_bd_userrole (
+            <include refid="Base_Column_List"/>
+        ) values (
+            #{item.fID},#{item.fUserID},#{item.fRoleID},#{item.fCreatorID},#{item.fCreateTime},#{item.fLastUpdateUserID},#{item.fLastUpdateTime}
+            ,0
+        )
+        </foreach>
+    </insert>
+
+    <insert id="insertRoleUserBatch" databaseId="oracle">
+        begin
+        <foreach collection="list" index="index" item="item" separator=";">
+            insert into t_bd_userrole (
+            <include refid="Base_Column_List"/>
+            ) values (
+            #{item.fID},#{item.fUserID},#{item.fRoleID},#{item.fCreatorID},#{item.fCreateTime},#{item.fLastUpdateUserID},#{item.fLastUpdateTime}
+            ,0
+            )
+        </foreach>
+        ;end;
+    </insert>
+
+    <delete id="deleteRoleUserBatch">
+        delete from t_bd_userrole where fRoleID = #{roleUserVO.roleID} and fUserID in
+        <foreach collection="roleUserVO.userIDList" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        and fIsInit = 0
+    </delete>
+
+    <delete id="deleteUserRoleBatch">
+        delete from t_bd_userrole where fUserID = #{userRoleVO.userID} and fRoleID in
+        <foreach collection="userRoleVO.roleIDList" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        and fIsInit = 0
+    </delete>
+
+
+</mapper>

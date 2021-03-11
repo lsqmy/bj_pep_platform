@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.RoleDAO">
+    <resultMap id="RoleResultMap" type="araFwRole">
+        <id column="fID" property="fID"/>
+        <result column="fName" property="fName"/>
+        <result column="fNumber" property="fNumber"/>
+        <result column="fStatus" property="fStatus"/>
+        <result column="fDescription" property="fDescription"/>
+        <result column="fCreatorID" property="fCreatorID"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime"/>
+        <result column="fIsInit" property="fIsInit"/>
+        <!--关联user表查询出用户名-->
+        <result column="fCreatorName" property="fCreatorName"/>
+        <result column="fLastUpdateUserName" property="fLastUpdateUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fName, fNumber, fStatus, fDescription, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime, fIsInit
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fName, t.fNumber, t.fStatus, t.fDescription, t.fCreatorID, t.fCreateTime, t.fLastUpdateUserID, t.fLastUpdateTime, t.fIsInit
+    </sql>
+
+    <select id="selectRoleByID" resultMap="RoleResultMap" parameterType="string">
+        select
+        <include refid="Base_Column_List"/>
+        from T_BD_ROLE
+        <where>
+            fID = #{fID}
+        </where>
+    </select>
+
+    <select id="selectRoleByName" resultMap="RoleResultMap" parameterType="string">
+        select
+        <include refid="Base_Column_List"/>
+        from T_BD_ROLE
+        <where>
+            fName = #{fName}
+        </where>
+    </select>
+
+    <select id="selectRoleList" resultMap="RoleResultMap" parameterType="araFwRole">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from T_BD_ROLE t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        <trim prefix="where" prefixOverrides="and">
+            <if test="fName != null and fName != ''">
+                <choose>
+                    <when test="_databaseId == 'sqlserver'">
+                        and t.fName like '%'+#{fName}+'%'
+                    </when>
+                    <otherwise>
+                        and t.fName like concat(concat('%',#{fName}),'%')
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="fNumber != null and fNumber != ''">
+                and t.fNumber = #{fNumber}
+            </if>
+            <if test="fDescription != null and fDescription != ''">
+                <choose>
+                    <when test="_databaseId == 'sqlserver'">
+                        and t.fDescription '%'+#{fDescription}+'%'
+                    </when>
+                    <otherwise>
+                        and t.fDescription like concat(concat('%',#{fDescription}),'%')
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="fStatus != null and fStatus != ''">
+                and t.fStatus = #{fStatus}
+            </if>
+            <if test="queryCreateTimeStart != null">
+                and t.fCreateTime >= #{queryCreateTimeStart}
+            </if>
+            <if test="queryCreateTimeEnd != null">
+                <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+                ]]>
+            </if>
+            <if test="queryUpdateTimeStart != null">
+                and t.fLastUpdateTime >= #{queryUpdateTimeStart}
+            </if>
+            <if test="queryUpdateTimeEnd != null">
+                <![CDATA[
+                and t.fLastUpdateTime <= #{queryUpdateTimeEnd}
+                ]]>
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectCountReference" resultType="int">
+        select count(1) as referenceNum from (
+            select fID from t_bd_rolerights where FRoleID = #{roleID}
+            union all
+            select fID from t_bd_userrole where FRoleID = #{roleID}
+        ) t
+    </select>
+
+    <select id="selectRoleByNumber" resultMap="RoleResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from T_BD_ROLE
+        where fNumber = #{fNumber}
+    </select>
+
+    <select id="selectRoleListByUserID" resultType="araFwRole">
+        select
+        <include refid="Base_Column_List_t"/>
+        from T_BD_ROLE t
+        left join t_bd_userrole t1 on t1.FRoleID = t.FID
+        where t1.FUserID = #{userID}
+    </select>
+
+    <update id="updateRoleInfo" parameterType="araFwRole">
+        update T_BD_ROLE
+        set
+            fNumber = #{fNumber},
+            fName = #{fName},
+            fDescription = #{fDescription},
+            fLastUpdateUserID = #{currentUserID},
+            fLastUpdateTime = #{currentUserOperationTime}
+        where fID = #{fID}
+        and fIsInit = 0
+    </update>
+
+    <update id="updateRoleStatus" parameterType="araFwRole">
+        update T_BD_ROLE
+        set fStatus = #{fStatus}
+            ,fLastUpdateUserID = #{currentUserID}
+            ,fLastUpdateTime = #{currentUserOperationTime}
+        where fID = #{fID}
+        and fIsInit = 0
+    </update>
+
+    <update id="updateRoleStatusBatch" parameterType="list">
+        <foreach collection="list" index="index" item="item" separator=";">
+            update T_BD_ROLE
+            set fStatus = #{item.fStatus}
+            ,fLastUpdateUserID = #{item.currentUserID}
+            ,fLastUpdateTime = #{item.currentUserOperationTime}
+            where fID = #{item.fID}
+            and fIsInit = 0
+        </foreach>
+    </update>
+
+    <update id="updateRoleStatusBatch" parameterType="list" databaseId="oracle">
+        begin
+        <foreach collection="list" index="index" item="item" separator=";">
+            update T_BD_ROLE
+            set fStatus = #{item.fStatus}
+            ,fLastUpdateUserID = #{item.currentUserID}
+            ,fLastUpdateTime = #{item.currentUserOperationTime}
+            where fID = #{item.fID}
+            and fIsInit = 0
+        </foreach>
+        ;end;
+    </update>
+
+</mapper>

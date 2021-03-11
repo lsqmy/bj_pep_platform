@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.SysParamDAO">
+    <resultMap id="SysParamResultMap" type="araFwSysParam">
+        <id column="fID" property="fID"/>
+        <result column="fName" property="fName"/>
+        <result column="fNumber" property="fNumber"/>
+        <result column="fValue" property="fValue"/>
+        <result column="fDescription" property="fDescription"/>
+        <result column="fCreatorID" property="fCreatorID"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime"/>
+        <!--关联user表查询出用户名-->
+        <result column="fCreatorName" property="fCreatorName"/>
+        <result column="fLastUpdateUserName" property="fLastUpdateUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fName, fNumber, fValue, fDescription, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fName, t.fNumber, t.fValue, t.fDescription, t.fCreatorID, t.fCreateTime, t.fLastUpdateUserID, t.fLastUpdateTime
+    </sql>
+
+    <select id="selectSysParamList" resultMap="SysParamResultMap" parameterType="araFwSysParam">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from t_bd_param t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        <where>
+            <if test="fName != null and fName != ''">
+                <choose>
+                    <when test="_databaseId == 'sqlserver'">
+                        and t.fName like '%'+#{fName}+'%'
+                    </when>
+                    <otherwise>
+                        and t.fName like concat(concat('%',#{fName}),'%')
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="fNumber != null and fNumber != ''">
+                and t.fNumber = #{fNumber}
+            </if>
+            <if test="fValue != null and fValue != ''">
+                and t.fValue = #{fValue}
+            </if>
+            <if test="queryCreateTimeStart != null">
+                and t.fCreateTime >= #{queryCreateTimeStart}
+            </if>
+            <if test="queryCreateTimeEnd != null">
+                <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+                ]]>
+            </if>
+            <if test="queryUpdateTimeStart != null">
+                and t.fLastUpdateTime >= #{queryUpdateTimeStart}
+            </if>
+            <if test="queryUpdateTimeEnd != null">
+                <![CDATA[
+                and t.fLastUpdateTime <= #{queryUpdateTimeEnd}
+                ]]>
+            </if>
+        </where>
+    </select>
+
+    <select id="selectCountByName" resultType="int" parameterType="string">
+        select count(1) as num
+        from t_bd_param
+        where fName = #{fName}
+    </select>
+
+    <select id="selectSysParamByNumber" resultMap="SysParamResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_bd_param
+        where fNumber = #{fNumber}
+    </select>
+
+    <insert id="insertSysParam" parameterType="araFwSysParam">
+        insert into t_bd_param (
+        <include refid="Base_Column_List"/>
+        ) values (
+        #{fID},
+        #{fName},
+        #{fNumber},
+        #{fValue},
+        #{fDescription},
+        #{currentUserID},
+        #{currentUserOperationTime},
+        #{currentUserID},
+        #{currentUserOperationTime}
+        )
+    </insert>
+
+    <update id="updateSysParam" parameterType="araFwSysParam">
+        update t_bd_param set
+            fNumber = #{fNumber},
+            fName = #{fName},
+            fValue = #{fValue},
+            fDescription = #{fDescription},
+            fLastUpdateUserID = #{currentUserID},
+            fLastUpdateTime = #{currentUserOperationTime}
+        where fID = #{fID}
+    </update>
+
+    <delete id="deleteSysParamByID" parameterType="string">
+        delete from t_bd_param where fID = #{sysParamID}
+    </delete>
+
+    <delete id="deleteSysParamBatch" parameterType="list">
+        <foreach collection="list" item="item" index="index" separator=";">
+            delete from t_bd_param where fID = #{item}
+        </foreach>
+    </delete>
+
+    <delete id="deleteSysParamBatch" parameterType="list" databaseId="oracle">
+        begin
+        <foreach collection="list" item="item" index="index" separator=";">
+            delete from t_bd_param where fID = #{item}
+        </foreach>
+        ;end;
+    </delete>
+
+
+</mapper>

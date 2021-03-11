@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.ParamRightDAO">
+    <resultMap id="ParamRightResultMap" type="araFwParamRight">
+        <id column="fID" property="fID"/>
+        <result column="fRightCode" property="fRightCode"/>
+        <result column="fRightName" property="fRightName"/>
+        <result column="fDisplayorder" property="fDisplayorder"/>
+        <result column="fCreatorID" property="fCreatorID"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime"/>
+        <!--关联user表查询出用户名-->
+        <result column="fCreatorName" property="fCreatorName"/>
+        <result column="fLastUpdateUserName" property="fLastUpdateUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fRightCode, fRightName, fDisplayorder, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fRightCode, t.fRightName, t.fDisplayorder, t.fCreatorID, t.fCreateTime, t.fLastUpdateUserID, t.fLastUpdateTime
+    </sql>
+
+    <select id="selectParamRightList" resultMap="ParamRightResultMap">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from t_bd_paramright t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        <where>
+            <if test="fRightCode != null and fRightCode != ''">
+                and t.fRightCode = #{fRightCode}
+            </if>
+            <if test="fRightName != null and fRightName != ''">
+                and t.fRightName = #{fRightName}
+            </if>
+            <if test="queryCreateTimeStart != null">
+                and t.fCreateTime >= #{queryCreateTimeStart}
+            </if>
+            <if test="queryCreateTimeEnd != null">
+                <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+                ]]>
+            </if>
+            <if test="queryUpdateTimeStart != null">
+                and t.fLastUpdateTime >= #{queryUpdateTimeStart}
+            </if>
+            <if test="queryUpdateTimeEnd != null">
+                <![CDATA[
+                and t.fLastUpdateTime <= #{queryUpdateTimeEnd}
+                ]]>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertParamRight">
+        insert into t_bd_paramright (
+        <include refid="Base_Column_List"/>
+        ) values (
+        #{fID},
+        #{fRightCode},
+        #{fRightName},
+        #{fDisplayorder},
+        #{currentUserID},
+        #{currentUserOperationTime},
+        #{currentUserID},
+        #{currentUserOperationTime}
+        )
+    </insert>
+
+    <update id="updateParamRight">
+        update t_bd_paramright set
+            fRightCode = #{fRightCode},
+            fRightName = #{fRightName},
+            fDisplayorder = #{fDisplayorder},
+            fLastUpdateUserID = #{currentUserID},
+            fLastUpdateTime = #{currentUserOperationTime}
+        where fID = #{fID}
+    </update>
+
+    <delete id="deleteParamRightBatch" parameterType="list">
+        delete from t_bd_paramright where fID in
+        <foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+
+
+</mapper>

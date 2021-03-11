@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.UserDAO">
+    <resultMap id="UserResultMap" type="araFwUser">
+        <id column="fID" property="fID"/>
+        <result column="fName" property="fName"/>
+        <result column="fPassWord" property="fPassWord"/>
+        <result column="fNumber" property="fNumber"/>
+        <result column="fEmail" property="fEmail"/>
+        <result column="fMobile" property="fMobile"/>
+        <result column="fQQ" property="fQQ"/>
+        <result column="fWeiXin" property="fWeiXin"/>
+        <result column="fDescription" property="fDescription"/>
+        <result column="fStatus" property="fStatus"/>
+        <result column="fLoginTime" property="fLoginTime"/>
+        <result column="fCreatorID" property="fCreatorID"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime"/>
+        <result column="fIsInit" property="fIsInit"/>
+        <!--关联user表查询出用户名-->
+        <result column="fCreatorName" property="fCreatorName"/>
+        <result column="fLastUpdateUserName" property="fLastUpdateUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fName, fPassWord, fNumber, fEmail, fMobile, fQQ, fWeiXin, fDescription, fStatus, fLoginTime, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime, fIsInit, fErrorNum, fLastErrorTime, fLastChangePswTime, fPeriodOfValidity
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fName, t.fPassWord, t.fNumber, t.fEmail, t.fMobile, t.fQQ, t.fWeiXin, t.fDescription, t.fStatus, t.fLoginTime, t.fCreatorID, t.fCreateTime, t.fLastUpdateUserID, t.fLastUpdateTime, t.fIsInit, t.fErrorNum, t.fLastErrorTime, t.fLastChangePswTime, t.fPeriodOfValidity
+    </sql>
+
+    <select id="selectUserByID" resultMap="UserResultMap" parameterType="string">
+        select
+        <include refid="Base_Column_List"/>
+        from T_BD_USER
+        <where>
+            fID = #{fID}
+        </where>
+    </select>
+
+    <select id="selectUserByName" resultMap="UserResultMap" parameterType="string" databaseId="mysql">
+        select
+        <include refid="Base_Column_List"/>
+        from T_BD_USER
+        <where>
+            BINARY fName = #{fName}
+        </where>
+    </select>
+
+    <select id="selectUserByName" resultMap="UserResultMap" parameterType="string" databaseId="oracle">
+        select
+        <include refid="Base_Column_List"/>
+        from T_BD_USER
+        <where>
+            fName = #{fName}
+        </where>
+    </select>
+
+    <select id="selectUserList" resultMap="UserResultMap" parameterType="araFwUser">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from T_BD_USER t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        <trim prefix="where" prefixOverrides="and">
+            <if test="fNumber != null and fNumber != ''">
+                and t.fNumber = #{fNumber}
+            </if>
+            <if test="fName != null and fName != '' and _databaseId == 'mysql'">
+                and t.fName like concat('%',#{fName},'%')
+            </if>
+            <if test="fName != null and fName != '' and _databaseId == 'oracle'">
+                and t.fName like '%'||#{fName}||'%'
+            </if>
+            <if test="fName != null and fName != '' and _databaseId == 'sqlserver'">
+                and t.fName like '%'+#{fName}+'%'
+            </if>
+            <if test="fEmail != null and fEmail != ''">
+                and t.fEmail = #{fEmail}
+            </if>
+            <if test="fMobile != null and fMobile != ''">
+                and t.fMobile = #{fMobile}
+            </if>
+            <if test="fQQ != null and fQQ != ''">
+                and t.fQQ = #{fQQ}
+            </if>
+            <if test="fWeiXin != null and fWeiXin != ''">
+                and t.fWeiXin = #{fWeiXin}
+            </if>
+            <if test="fStatus != null">
+                and t.fStatus = #{fStatus}
+            </if>
+            <if test="queryCreateTimeStart != null">
+                and t.fCreateTime >= #{queryCreateTimeStart}
+            </if>
+            <if test="queryCreateTimeEnd != null">
+                <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+                ]]>
+            </if>
+            <if test="queryUpdateTimeStart != null">
+                and t.fLastUpdateTime >= #{queryUpdateTimeStart}
+            </if>
+            <if test="queryUpdateTimeEnd != null">
+                <![CDATA[
+                and t.fLastUpdateTime <= #{queryUpdateTimeEnd}
+                ]]>
+            </if>
+        </trim>
+    </select>
+
+    <select id="selectRightListByUserID" resultType="string">
+        select
+        <choose>
+            <when test="_databaseId == 'sqlserver'">
+                t3.fNumber+':'+t2.fRightCode
+            </when>
+            <otherwise>
+                concat(concat(t3.fNumber,':'),t2.fRightCode)
+            </otherwise>
+        </choose>
+        from t_bd_userrights t1
+        left join t_bd_menurights t2 on t2.fID = t1.fRightID
+        left join t_bd_mainmenuitem t3 on t3.fID = t1.FMainMenuItemID
+        where t1.fUserID = #{userID}
+        and t3.fNumber is not null
+        and t2.fRightCode is not null
+        union
+        select
+        <choose>
+            <when test="_databaseId == 'sqlserver'">
+                t7.FNumber+':'+t6.fRightCode
+            </when>
+            <otherwise>
+                concat(concat(t7.FNumber,':'),t6.fRightCode)
+            </otherwise>
+        </choose>
+        from t_bd_userrole t4
+        left join t_bd_rolerights t5 on t5.fRoleID = t4.fRoleID
+        left join t_bd_menurights t6 on t6.fID = t5.fRightID
+        left join t_bd_mainmenuitem t7 on t7.fID = t5.FMainmenuItemID
+        where t4.fUserID = #{userID}
+        and t7.FNumber is not null
+        and t6.fRightCode is not null
+    </select>
+
+    <select id="selectRoleNameListByUserID" resultType="java.lang.String">
+        select t2.fName
+        from t_bd_userrole t1
+        left join t_bd_role t2 on t1.fRoleID = t2.fID
+        where t1.fUserID = #{userID}
+    </select>
+
+    <select id="selectRoleIDListByUserID" resultType="java.lang.String">
+        select fRoleID
+        from t_bd_userrole
+        where fUserID = #{userID}
+    </select>
+
+    <select id="selectCountUserReferenceByUserID" resultType="int" parameterType="string">
+        select count(1) as referenceNum from (
+            select fID from t_bd_userrole where fUserID = #{userID}
+            union all
+            select fID from t_bd_userrights where fUserID = #{userID}
+            union all
+            select fID from t_bd_role where fCreatorID = #{userID} or fLastUpdateUserID = #{userID}
+            union all
+            select fID from t_bd_rolerights where fCreatorID = #{userID} or fLastUpdateUserID = #{userID}
+            union all
+            select fID from t_bd_userloginlog where fUserID = #{userID}
+            union all
+            select fID from t_bd_userlog where fUserID = #{userID}
+            union all
+            select fID from t_bd_mainmenuitem where fCreatorID = #{userID} or fLastUpdateUserID = #{userID}
+            union all
+            select fID from t_bd_menurights where fCreatorID = #{userID} or fLastUpdateUserID = #{userID}
+        ) t
+    </select>
+
+    <select id="selectCountNumber" resultType="java.lang.Integer">
+        select count(1) as num from t_bd_user where fNumber = #{fNumber}
+    </select>
+
+    <select id="selectUserByNumber" resultMap="UserResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from T_BD_USER
+        <where>
+            fNumber = #{fNumber}
+        </where>
+    </select>
+
+    <select id="selectUserListByRoleID" resultMap="UserResultMap">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from T_BD_USER t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        left join t_bd_userrole t3 on t3.fUserID = t.fID
+        <where>
+            <if test="roleID != null and roleID != ''">
+                and t3.fRoleID = #{roleID}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateUserInfo" parameterType="araFwUser">
+        update T_BD_USER
+        set
+            fNumber = #{fNumber},
+            fName = #{fName},
+            fEmail = #{fEmail},
+            fMobile = #{fMobile},
+            fQQ = #{fQQ},
+            fWeiXin = #{fWeiXin},
+            fDescription = #{fDescription},
+            fLastUpdateUserID = #{currentUserID},
+            fLastUpdateTime = #{currentUserOperationTime},
+            fPeriodOfValidity = #{fPeriodOfValidity}
+        where fID = #{fID}
+    </update>
+
+    <update id="updateUserLoginTime" parameterType="araFwUser">
+        update T_BD_USER set fLoginTime = #{fLoginTime} where fID = #{fID}
+    </update>
+
+    <update id="updateUserStatus" parameterType="araFwUser">
+        update T_BD_USER
+        set fStatus = #{fStatus}
+            ,fLastUpdateUserID = #{currentUserID}
+            ,fLastUpdateTime = #{currentUserOperationTime}
+        where fID = #{fID}
+        and fIsInit = 0
+    </update>
+
+    <update id="updateUserStatusBatch" parameterType="list">
+        <foreach collection="list" index="index" item="item" separator=";">
+            update T_BD_USER
+            set fStatus = #{item.fStatus}
+            ,fLastUpdateUserID = #{item.currentUserID}
+            ,fLastUpdateTime = #{item.currentUserOperationTime}
+            where fID = #{item.fID}
+            and fIsInit = 0
+        </foreach>
+    </update>
+
+    <update id="updateUserStatusBatch" parameterType="list" databaseId="oracle">
+        <foreach collection="list" index="index" item="item" open="begin" close=";end;" separator=";">
+            update T_BD_USER
+            set fStatus = #{item.fStatus}
+            ,fLastUpdateUserID = #{item.currentUserID}
+            ,fLastUpdateTime = #{item.currentUserOperationTime}
+            where fID = #{item.fID}
+            and fIsInit = 0
+        </foreach>
+    </update>
+
+    <update id="updateUserPasswordByID">
+        update t_bd_user set
+        fPassWord = #{pwd},
+        fLastChangePswTime = #{fLastChangePswTime}
+        where fID = #{userID}
+    </update>
+
+    <update id="updateCurrentUserInfo">
+        update T_BD_USER
+        set
+            fEmail = #{fEmail},
+            fMobile = #{fMobile},
+            fQQ = #{fQQ},
+            fWeiXin = #{fWeiXin},
+            fLastUpdateUserID = #{currentUserID},
+            fLastUpdateTime = #{currentUserOperationTime}
+        where fID = #{fID}
+    </update>
+
+    <update id="updateLoginError">
+        update T_BD_USER
+        set
+            fLastErrorTime = #{fLastErrorTime},
+            fErrorNum = #{fErrorNum}
+        where fID = #{fID}
+    </update>
+</mapper>

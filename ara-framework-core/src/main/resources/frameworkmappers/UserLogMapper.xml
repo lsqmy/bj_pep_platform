@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.UserLogDAO">
+    <resultMap id="UserLogResultMap" type="araFwUserLog">
+        <id column="fID" property="fID"/>
+        <result column="fUserID" property="fUserID"/>
+        <result column="fActType" property="fActType"/>
+        <result column="fModel" property="fModel"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fEquipmentNo" property="fEquipmentNo"/>
+        <result column="fIP" property="fIP"/>
+        <!--关联user表查询出用户名-->
+        <result column="fUserName" property="fUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fUserID, fActType, fModel, fCreateTime, fEquipmentNo, fIP
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fUserID, t.fActType, t.fModel, t.fCreateTime, t.fEquipmentNo, t.fIP
+    </sql>
+
+    <select id="selectUserLogList" resultMap="UserLogResultMap" parameterType="araFwUserLog">
+        select t1.fName as fUserName,
+        <include refid="Base_Column_List_t"/>
+        from T_BD_USERLOG t
+        left join T_BD_USER t1 on t1.fID = t.fUserID
+        <trim prefix="where" prefixOverrides="and">
+            <if test="fUserName != null and fUserName != ''">
+                and t1.fName = #{fUserName}
+            </if>
+            <if test="fModel != null and fModel != ''">
+                and t.fModel = #{fModel}
+            </if>
+            <if test="fActType != null and fActType != ''">
+                and t.fActType = #{fActType}
+            </if>
+            <if test="fIP != null and fIP != ''">
+                and t.fIP = #{fIP}
+            </if>
+            <if test="queryCreateTimeStart != null">
+                and t.fCreateTime >= #{queryCreateTimeStart}
+            </if>
+            <if test="queryCreateTimeEnd != null">
+                <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+                ]]>
+            </if>
+        </trim>
+    </select>
+
+
+</mapper>

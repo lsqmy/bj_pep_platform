@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.AppInfoDAO">
+
+    <resultMap id="AppInfoResultMap" type="araFwAppInfo">
+        <id column="fID" property="fID"/>
+        <result column="fAppID" property="fAppID"/>
+        <result column="fAppName" property="fAppName"/>
+        <result column="fPassWord" property="fPassWord"/>
+        <result column="fAppVersion" property="fAppVersion"/>
+        <result column="fForce" property="fForce"/>
+        <result column="fDescription" property="fDescription"/>
+        <result column="fCreatorID" property="fCreatorID"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime"/>
+        <!--关联user表查询出用户名-->
+        <result column="fCreatorName" property="fCreatorName"/>
+        <result column="fLastUpdateUserName" property="fLastUpdateUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fAppID, fAppName, fPassWord, fAppVersion, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime, fForce, fDescription
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fAppID, t.fAppName, t.fPassWord, t.fAppVersion, t.fCreatorID, t.fCreateTime, t.fLastUpdateUserID, t.fLastUpdateTime, t.fForce, t.fDescription
+    </sql>
+
+
+    <select id="selectAppInfoList" resultMap="AppInfoResultMap" parameterType="araFwAppInfo">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from t_bd_appinfo t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        <where>
+            <if test="fAppID != null and fAppID != ''">
+                and t.fAppID = #{fAppID}
+            </if>
+            <if test="fAppName != null and fAppName != ''">
+                <choose>
+                    <when test="_databaseId == 'sqlserver'">
+                        and t.fAppName '%'+#{fAppName}+'%'
+                    </when>
+                    <otherwise>
+                        and t.fAppName like concat(concat('%',#{fAppName}),'%')
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="fAppVersion != null and fAppVersion != ''">
+                and t.fAppVersion = #{fAppVersion}
+            </if>
+            <if test="queryCreateTimeStart != null">
+                and t.fCreateTime >= #{queryCreateTimeStart}
+            </if>
+            <if test="queryCreateTimeEnd != null">
+                <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+                ]]>
+            </if>
+            <if test="queryUpdateTimeStart != null">
+                and t.fLastUpdateTime >= #{queryUpdateTimeStart}
+            </if>
+            <if test="queryUpdateTimeEnd != null">
+                <![CDATA[
+                and t.fLastUpdateTime <= #{queryUpdateTimeEnd}
+                ]]>
+            </if>
+        </where>
+    </select>
+
+    <select id="selectAppInfoByAppID" resultMap="AppInfoResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_bd_appinfo
+        where fAppID = #{fAppID}
+    </select>
+
+    <update id="updateAppInfo" parameterType="araFwAppInfo">
+        update t_bd_appinfo set
+            fAppID = #{fAppID},
+            fAppName = #{fAppName},
+            fPassWord = #{fPassWord},
+            fAppVersion = #{fAppVersion},
+            fForce = #{fForce},
+            fDescription = #{fDescription},
+            fLastUpdateUserID = #{currentUserID},
+            fLastUpdateTime = #{currentUserOperationTime}
+        where fID = #{fID}
+    </update>
+
+    <delete id="deleteAppInfoBatch">
+        <foreach collection="list" index="index" item="item" separator="">
+            delete from t_bd_appinfoentry where fParentID = #{item};
+            delete from t_bd_appinfo where fID = #{item};
+        </foreach>
+    </delete>
+
+    <delete id="deleteAppInfoBatch" databaseId="oracle">
+        begin
+        <foreach collection="list" index="index" item="item" separator="">
+            delete from t_bd_appinfoentry where fParentID = #{item};
+            delete from t_bd_appinfo where fID = #{item};
+        </foreach>
+        ;end;
+    </delete>
+
+</mapper>

@@ -1,0 +1,5 @@
+# Project exclude paths
+/ara-framework-core/target/
+/ara-framework-domain/target/
+/ara-framework-generator/target/
+/ara-framework-start-demo/target/

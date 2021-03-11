@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.FeedbackDAO">
+    <resultMap id="FeedbackResultMap" type="araFwFeedback">
+        <id column="fID" property="fID"/>
+        <result column="fUserID" property="fUserID"/>
+        <result column="fSuggestion" property="fSuggestion"/>
+        <result column="fStatus" property="fStatus"/>
+        <result column="fDescription" property="fDescription"/>
+        <result column="fCreatorID" property="fCreatorID"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime"/>
+        <!--关联user表查询出用户名-->
+        <result column="fCreatorName" property="fCreatorName"/>
+        <result column="fLastUpdateUserName" property="fLastUpdateUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fUserID, fSuggestion, fStatus, fDescription, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fUserID, t.fSuggestion, t.fStatus, t.fDescription, t.fCreatorID, t.fCreateTime, t.fLastUpdateUserID, t.fLastUpdateTime
+    </sql>
+
+    <select id="selectFeedbackList" resultMap="FeedbackResultMap" parameterType="araFwFeedback">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from t_bd_feedback t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        <where>
+            <if test="fSuggestion != null and fSuggestion != ''">
+                and t.fSuggestion like concat(concat('%',#{fSuggestion}),'%')
+            </if>
+            <if test="queryCreateTimeStart != null">
+                and t.fCreateTime >= #{queryCreateTimeStart}
+            </if>
+            <if test="queryCreateTimeEnd != null">
+                <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+                ]]>
+            </if>
+            <if test="queryUpdateTimeStart != null">
+                and t.fLastUpdateTime >= #{queryUpdateTimeStart}
+            </if>
+            <if test="queryUpdateTimeEnd != null">
+                <![CDATA[
+                and t.fLastUpdateTime <= #{queryUpdateTimeEnd}
+                ]]>
+            </if>
+        </where>
+    </select>
+
+    <select id="selectFeedbackList" resultMap="FeedbackResultMap" parameterType="araFwFeedback" databaseId="sqlserver">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from t_bd_feedback t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        <where>
+            <if test="fSuggestion != null and fSuggestion != ''">
+                and t.fSuggestion like '%'+#{fSuggestion}+'%'
+            </if>
+            <if test="queryCreateTimeStart != null">
+                and t.fCreateTime >= #{queryCreateTimeStart}
+            </if>
+            <if test="queryCreateTimeEnd != null">
+                <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+                ]]>
+            </if>
+            <if test="queryUpdateTimeStart != null">
+                and t.fLastUpdateTime >= #{queryUpdateTimeStart}
+            </if>
+            <if test="queryUpdateTimeEnd != null">
+                <![CDATA[
+                and t.fLastUpdateTime <= #{queryUpdateTimeEnd}
+                ]]>
+            </if>
+        </where>
+    </select>
+
+    <insert id="insertFeedback" parameterType="araFwFeedback">
+        insert into t_bd_feedback (
+        <include refid="Base_Column_List"/>
+        ) values (
+        #{fID},
+        #{fUserID},
+        #{fSuggestion},
+        #{fStatus},
+        #{fDescription},
+        #{currentUserID},
+        #{currentUserOperationTime},
+        #{currentUserID},
+        #{currentUserOperationTime}
+        )
+    </insert>
+
+    <update id="updateFeedback" parameterType="araFwFeedback">
+        update t_bd_feedback set
+            fSuggestion = #{fSuggestion},
+            fDescription = #{fDescription},
+            fStatus = #{fStatus},
+            fLastUpdateUserID = #{currentUserID},
+            fLastUpdateTime = #{currentUserOperationTime}
+        where fID = #{fID}
+    </update>
+
+
+    <delete id="deleteFeedbackByID" parameterType="string">
+        delete from t_bd_feedback where fID = #{fID}
+    </delete>
+
+    <delete id="deleteFeedbackBatch" parameterType="list">
+        <foreach collection="list" item="item" index="index" separator=";">
+            delete from t_bd_feedback where fID = #{item}
+        </foreach>
+    </delete>
+
+    <delete id="deleteFeedbackBatch" parameterType="list" databaseId="oracle">
+        begin
+        <foreach collection="list" item="item" index="index" separator=";">
+            delete from t_bd_feedback where fID = #{item}
+        </foreach>
+        ;end;
+    </delete>
+
+
+</mapper>

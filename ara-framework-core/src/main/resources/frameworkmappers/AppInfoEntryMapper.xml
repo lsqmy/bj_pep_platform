@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.AppInfoEntryDAO">
+
+    <resultMap id="AppInfoEntryResultMap" type="araFwAppInfoEntry">
+        <id column="fID" property="fID"/>
+        <result column="fParentID" property="fParentID"/>
+        <result column="fFileName" property="fFileName"/>
+        <result column="fMD5" property="fMD5"/>
+        <result column="fAppPath" property="fAppPath"/>
+        <result column="fLocalDirectory" property="fLocalDirectory"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fParentID, fFileName, fMD5, fAppPath, fLocalDirectory
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fParentID, t.fFileName, t.fMD5, t.fAppPath, t.fLocalDirectory
+    </sql>
+
+
+    <select id="selectAppInfoEntryList" resultMap="AppInfoEntryResultMap" parameterType="araFwAppInfoEntry">
+        select
+        <include refid="Base_Column_List_t"/>
+        from t_bd_appinfoentry t
+        <where>
+            <if test="fParentID != null and fParentID != ''">
+                and t.fParentID = #{fParentID}
+            </if>
+            <if test="queryCreateTimeStart != null">
+                and t.fCreateTime >= #{queryCreateTimeStart}
+            </if>
+            <if test="queryCreateTimeEnd != null">
+                <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+                ]]>
+            </if>
+            <if test="queryUpdateTimeStart != null">
+                and t.fLastUpdateTime >= #{queryUpdateTimeStart}
+            </if>
+            <if test="queryUpdateTimeEnd != null">
+                <![CDATA[
+                and t.fLastUpdateTime <= #{queryUpdateTimeEnd}
+                ]]>
+            </if>
+        </where>
+        order by t.fParentID asc, t.fFileName asc
+    </select>
+
+    <insert id="insertAppInfoEntry">
+        insert into t_bd_appinfoentry (
+        <include refid="Base_Column_List"/>
+        ) values (
+        #{fID},
+        #{fParentID},
+        #{fFileName},
+        #{fMD5},
+        #{fAppPath},
+        #{fLocalDirectory}
+        )
+    </insert>
+
+    <insert id="insertAppInfoEntryBatch">
+        <foreach collection="list" index="index" item="item" separator=";">
+            insert into t_bd_appinfoentry (
+            <include refid="Base_Column_List"/>
+            ) values (
+            #{item.fID},
+            #{item.fParentID},
+            #{item.fFileName},
+            #{item.fMD5},
+            #{item.fAppPath},
+            #{item.fLocalDirectory}
+            )
+        </foreach>
+    </insert>
+
+    <insert id="insertAppInfoEntryBatch" databaseId="oracle">
+        begin
+        <foreach collection="list" index="index" item="item" separator=";">
+            insert into t_bd_appinfoentry (
+            <include refid="Base_Column_List"/>
+            ) values (
+            #{item.fID},
+            #{item.fParentID},
+            #{item.fFileName},
+            #{item.fMD5},
+            #{item.fAppPath},
+            #{item.fLocalDirectory}
+            )
+        </foreach>
+        ;end;
+    </insert>
+
+    <delete id="deleteAppInfoEntryBatch">
+        <foreach collection="list" index="index" item="item" separator=";">
+            delete from t_bd_appinfoentry where fID = #{item.fID}
+        </foreach>
+    </delete>
+
+    <delete id="deleteAppInfoEntryBatch" databaseId="oracle">
+        begin
+        <foreach collection="list" index="index" item="item" separator=";">
+            delete from t_bd_appinfoentry where fID = #{item.fID}
+        </foreach>
+        ;end;
+    </delete>
+
+</mapper>

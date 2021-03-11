@@ -1,0 +1,99 @@
+package com.aratek.easypass.controller.manager;
+
+import java.util.List;
+import java.util.Map;
+
+import com.aratek.easypass.utils.PageUtils;
+import com.aratek.easypass.utils.Query;
+import com.github.miemiedev.mybatis.paginator.domain.PageList;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Controller;
+import com.aratek.easypass.controller.BaseController;
+
+import com.aratek.easypass.model.entity.${className};
+import com.aratek.easypass.services.interfaces.${className}Service;
+import com.aratek.easypass.common.Result;
+
+
+
+/**
+ * ${comments}
+ * 
+ * @author ${author}
+ * @email ${email}
+ * @date ${datetime}
+ */
+@Controller
+@RequestMapping("mgr/${pathName}")
+public class Mgr${className}Controller extends BaseController{
+    @Autowired
+    private ${className}Service ${objectName}Service;
+    
+    /**
+     * 列表
+     */
+    @ResponseBody
+    @RequestMapping("/list")
+//    @RequiresPermissions("${pathName}:list")
+    public Result list(@RequestParam Map<String, Object> params){
+        Query map = new Query(params);
+        //查询列表数据
+        PageList<${className}> ${objectName}List = ${objectName}Service.queryList(map);
+        
+        return Result.ok().put("page", new PageUtils(${objectName}List));
+    }
+    
+    
+    /**
+     * 信息
+     */
+    @ResponseBody
+    @RequestMapping("/info/{${pk.attrname}}")
+//    @RequiresPermissions("${pathName}:info")
+    public Result info(@PathVariable("${pk.attrname}") ${pk.attrType} ${pk.attrname}){
+        ${className} ${objectName} = ${objectName}Service.queryObject(${pk.attrname});
+        
+        return Result.ok().put("${objectName}", ${objectName});
+    }
+    
+    /**
+     * 保存
+     */
+    @ResponseBody
+    @RequestMapping("/save")
+//    @RequiresPermissions("${pathName}:save")
+    public Result save(@RequestBody ${className} ${objectName}){
+        ${objectName}.setFcreatorid(getTBDUser().getFid());
+        ${objectName}Service.save(${objectName});
+        
+        return Result.ok();
+    }
+    
+    /**
+     * 修改
+     */
+    @ResponseBody
+    @RequestMapping("/update")
+//    @RequiresPermissions("${pathName}:update")
+    public Result update(@RequestBody ${className} ${objectName}){
+        ${objectName}.setFlastupdateuserid(getTBDUser().getFid());
+        ${objectName}Service.update(${objectName});
+        
+        return Result.ok();
+    }
+    
+    /**
+     * 删除
+     */
+    @ResponseBody
+    @RequestMapping("/delete")
+//    @RequiresPermissions("${pathName}:delete")
+    public Result delete(@RequestBody ${pk.attrType}[] ${pk.attrname}s){
+        ${objectName}Service.deleteBatch(${pk.attrname}s);
+        
+        return Result.ok();
+    }
+    
+}

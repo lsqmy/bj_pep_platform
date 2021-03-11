@@ -1,0 +1,121 @@
+package com.aratek.framework.core.service.impl;
+
+import com.aratek.framework.core.constant.AraCoreConstants;
+import com.aratek.framework.core.constant.AraResultCodeConstants;
+import com.aratek.framework.core.dao.${className}DAO;
+import com.aratek.framework.core.service.${className}Service;
+import com.aratek.framework.core.util.CurrentUserUtil;
+import com.aratek.framework.core.util.StringUtil;
+import com.aratek.framework.core.util.UUIDUtil;
+import com.aratek.framework.domain.base.Result;
+import com.aratek.framework.domain.core.${className};
+import com.github.pagehelper.PageHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+
+
+/**
+ * @author shijinlong
+ * @date 2018-05-15
+ * @description 城市服务 实现类
+ */
+@Service
+public class ${className}ServiceImpl implements ${className}Service {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(${className}ServiceImpl.class);
+
+    @Autowired
+    private ${className}DAO ${objectName}DAO;
+
+    @Override
+    public List<${className}> selectList(${className} ${objectName})
+        PageHelper.startPage(${objectName}.getPageNum(), ${objectName}.getPageSize());
+        return ${objectName}DAO.queryList(${objectName});
+    }
+
+    @Override
+    public Map insert(${className} ${objectName})
+        //校验number
+        if (cityDAO.selectCountByNumber(city.getfNumber()) > 0) {
+            return Result.error(AraResultCodeConstants.CODE_1004);
+        }
+        //校验name
+        if (cityDAO.selectCountByName(city.getfName()) > 0) {
+            return Result.error(AraResultCodeConstants.CODE_1005);
+        }
+        //生成ID
+        city.setfID(UUIDUtil.genID());
+        //设置状态初始值
+        city.setfStatus(AraCoreConstants.STATUS_ENABLE);
+        //设置当前操作人及操作时间
+        CurrentUserUtil.setOperatorInfo(city);
+        //insert
+        cityDAO.insertCity(city);
+        return Result.ok();
+    }
+
+    @Override
+    public Map updateCity(City city) {
+        //校验number
+        if (StringUtil.isNotBlank(city.getfNumber())) {
+            City city1 = cityDAO.selectCityByNumber(city.getfNumber());
+            if (city1 != null) {
+                if (!city.getfID().equals(city1.getfID())) {
+                    return Result.error(AraResultCodeConstants.CODE_1004);
+                }
+            }
+        }
+        //校验name
+        if (StringUtil.isNotBlank(city.getfName())) {
+            City city2 = cityDAO.selectCityByName(city.getfName());
+            if (city2 != null) {
+                if (!city.getfID().equals(city2.getfID())) {
+                    return Result.error(AraResultCodeConstants.CODE_1005);
+                }
+            }
+        }
+        //设置当前操作人及操作时间
+        CurrentUserUtil.setOperatorInfo(city);
+        //update
+        cityDAO.updateCity(city);
+        return Result.ok();
+    }
+
+    @Override
+    public Map updateCityStatusBatch(List<City> cityList) {
+//        for (City city : cityList) {
+//            //设置当前操作人及操作时间
+//            CurrentUserUtil.setOperatorInfo(city);
+//        }
+        //update
+        cityDAO.updateCityStatusBatch(cityList);
+        return Result.ok();
+    }
+
+    @Override
+    public Map deleteCityByID(String cityID) {
+        //校验引用
+        if (cityDAO.selectCountReferenceByID(cityID) > 0) {
+            return Result.error(AraResultCodeConstants.CODE_1006);
+        }
+        //delete
+        cityDAO.deleteCityByID(cityID);
+        return Result.ok();
+    }
+
+    @Override
+    public Map deleteCityBatch(List<String> idList) {
+        //校验引用
+        if (cityDAO.selectCountReferenceByIDList(idList) > 0) {
+            return Result.error(AraResultCodeConstants.CODE_1006);
+        }
+        //delete
+        cityDAO.deleteCityBatch(idList);
+        return Result.ok();
+    }
+}

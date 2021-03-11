@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.start.demo.dao.AraDemoDAO">
+    <resultMap id="UserResultMapDemo" type="com.aratek.framework.domain.core.User">
+        <id column="fID" property="fID" jdbcType="VARCHAR"/>
+        <result column="fName" property="fName" jdbcType="VARCHAR"/>
+        <result column="fNumber" property="fNumber" jdbcType="VARCHAR"/>
+        <result column="fEmail" property="fEmail" jdbcType="VARCHAR"/>
+        <result column="fMobile" property="fMobile" jdbcType="VARCHAR"/>
+        <result column="fQQ" property="fQQ" jdbcType="VARCHAR"/>
+        <result column="fWeiXin" property="fWeiXin" jdbcType="VARCHAR"/>
+        <result column="fStatus" property="fStatus" jdbcType="INTEGER"/>
+        <result column="fLoginTime" property="fLoginTime" jdbcType="TIMESTAMP"/>
+        <result column="fCreatorID" property="fCreatorID" jdbcType="VARCHAR"/>
+        <result column="fCreateTime" property="fCreateTime" jdbcType="TIMESTAMP"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID" jdbcType="VARCHAR"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List_Demo">
+        fID, fName, fNumber, fEmail, fQQ, fWeiXin, fStatus, fLoginTime, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime
+    </sql>
+
+    <select id="findUserDemo" resultMap="UserResultMapDemo" parameterType="com.aratek.framework.domain.core.User">
+        select
+        <include refid="Base_Column_List_Demo"/>
+        from T_BD_USER
+        <where>
+            <if test="fID != null">
+                fID = #{fID}
+            </if>
+        </where>
+    </select>
+
+    <select id="findUserListDemo" resultMap="UserResultMapDemo">
+        select
+        <include refid="Base_Column_List_Demo"/>
+        from T_BD_USER
+    </select>
+
+    <select id="findByPage" resultMap="UserResultMapDemo">
+        select
+        <include refid="Base_Column_List_Demo"/>
+        from T_BD_USER
+    </select>
+</mapper>

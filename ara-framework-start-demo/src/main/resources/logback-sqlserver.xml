@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration scan="true" sacnPeriod="60 seconds" debug="false">
+    <!-- 日志目录 -->
+    <springProperty scope="context" name="LOG_HOME" source="ara.log.path"/>
+    <springProperty scope="context" name="LOG_NAME" source="ara.log.name"/>
+    <springProperty scope="context" name="LOG_LEVEL" source="ara.log.level"/>
+
+    <!-- 文件日志格式 -->
+    <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [${PID:- }] [%thread] %logger [line - %L] : %msg%n"/>
+
+    <!--日志配置-->
+    <appender name="FILEDEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/${LOG_NAME}_%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>31</maxHistory>
+            <totalSizeCap>5GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+    </appender>
+
+    <logger name="druid.sql.ResultSet" level="INFO"/>
+
+    <!-- 日志输出级别 -->
+    <!-- 生产环境下，将此级别配置为适合的级别，以免日志文件太多或影响程序性能 -->
+    <root level="${LOG_LEVEL}">
+        <appender-ref ref="FILEDEBUG"/>
+    </root>
+</configuration>

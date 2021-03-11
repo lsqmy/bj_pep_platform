@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.RightDAO">
+    <resultMap id="RightResultMap" type="com.aratek.framework.domain.core.RightVO">
+        <result column="roleName" property="roleName"/>
+        <result column="userName" property="userName"/>
+        <result column="menuNumber" property="menuNumber"/>
+        <result column="rightCode" property="rightCode"/>
+        <result column="rightSource" property="rightSource"/>
+        <result column="menuName" property="menuName"/>
+        <result column="rightName" property="rightName"/>
+    </resultMap>
+
+    <select id="selectUserRightListByRoleName" resultMap="RightResultMap">
+        select t1.fRightCode as rightCode,t1.fRightName as rightName,
+        t2.fName as menuName,t2.fNumber as menuNumber,
+        t4.fName as roleName,t4.fName as rightSource
+        from t_bd_menurights t1
+        left join t_bd_mainmenuitem t2 on t2.fID = t1.FMainMenuItemID
+        left join t_bd_rolerights t3 on t3.FRightID = t1.FID
+        left join t_bd_role t4 on t4.FID = t3.FRoleID
+        where t4.fName = #{roleName}
+        <if test="menuNumber != null and menuNumber != ''">
+            and t2.fNumber = #{menuNumber}
+        </if>
+        <if test="rightCode != null and rightCode != ''">
+            and t1.fRightCode = #{rightCode}
+        </if>
+    </select>
+
+    <select id="selectUserRightListByUserName" resultMap="RightResultMap">
+        select t1.fRightCode as rightCode,t1.fRightName as rightName,
+        t2.fName as menuName,t2.fNumber as menuNumber,
+        '' as roleName,t4.fName as userName,t4.fName as rightSource
+        from t_bd_menurights t1
+        left join t_bd_mainmenuitem t2 on t2.fID = t1.FMainMenuItemID
+        left join t_bd_userrights t3 on t3.FRightID = t1.FID
+        left join t_bd_user t4 on t4.FID = t3.fUserID
+        where t4.fName = #{userName}
+        <if test="menuNumber != null and menuNumber != ''">
+            and t2.fNumber = #{menuNumber}
+        </if>
+        <if test="rightCode != null and rightCode != ''">
+            and t1.fRightCode = #{rightCode}
+        </if>
+        <if test="menuName != null and menuName != ''">
+            and t2.fName = #{menuName}
+        </if>
+        union all
+        select t1.fRightCode as rightCode,t1.fRightName as rightName,
+        t2.fName as menuName,t2.fNumber as menuNumber,
+        t4.fName as roleName,'' as userName,t4.fName as rightSource
+        from t_bd_menurights t1
+        left join t_bd_mainmenuitem t2 on t2.fID = t1.FMainMenuItemID
+        left join t_bd_rolerights t3 on t3.FRightID = t1.FID
+        left join t_bd_role t4 on t4.FID = t3.FRoleID
+        left join t_bd_userrole t5 on t5.fRoleID = t4.fID
+        left join t_bd_user t6 on t6.fID = t5.fUserID
+        where t6.fName = #{userName}
+        <if test="menuNumber != null and menuNumber != ''">
+            and t2.fNumber = #{menuNumber}
+        </if>
+        <if test="rightCode != null and rightCode != ''">
+            and t1.fRightCode = #{rightCode}
+        </if>
+        <if test="menuName != null and menuName != ''">
+            and t2.fName = #{menuName}
+        </if>
+    </select>
+
+
+</mapper>

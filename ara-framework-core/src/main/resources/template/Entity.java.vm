@@ -1,0 +1,53 @@
+package com.aratek.framework.domain.core;
+
+import com.aratek.framework.domain.base.QueryDomain;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import org.apache.ibatis.type.Alias;
+
+import javax.persistence.Column;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import java.util.Date;
+import java.util.List;
+
+
+/**
+ * @author ${author}
+ * @date ${datetime}
+ * @description ${comments}
+ * @table ${tableName}
+ */
+
+@Alias("${className}")
+@Table(name = "${tableName}")
+@ApiModel(value = "${className}", description = "${comments}")
+public class ${className} extends QueryDomain {
+
+
+#foreach ($column in $columns)
+
+    /**
+     * $column.comments
+    **/
+#if($column.columnKey.equalsIgnoreCase("PRI"))
+    @Id
+#end
+    @Column(name = "$column.attrname")
+    @ApiModelProperty(value = "$column.comments", example = "")
+    private $column.attrType $column.attrname;
+#end
+
+#foreach ($column in $columns)
+###set ($attrName = $column.attrname.substring(0,1).toUpperCase() + $column.attrname.substring(1,$column.attrname.length()))
+
+    public $column.attrType get${column.attrName}() {
+        return $column.attrname;
+    }
+    public void set${column.attrName}($column.attrType $column.attrname) {
+        this.$column.attrname = $column.attrname;
+    }
+
+#end
+}

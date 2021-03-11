@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.MenuDAO">
+    <resultMap id="MenuResultMap" type="araFwMenu">
+        <id column="fID" property="fID"/>
+        <result column="fName" property="fName"/>
+        <result column="fNumber" property="fNumber"/>
+        <result column="fLongNumber" property="fLongNumber"/>
+        <result column="fParentID" property="fParentID"/>
+        <result column="fDescription" property="fDescription"/>
+        <result column="fIsRoot" property="fIsRoot"/>
+        <result column="fLevel" property="fLevel"/>
+        <result column="fLink" property="fLink"/>
+        <result column="fIcon" property="fIcon"/>
+        <result column="fCreatorID" property="fCreatorID"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime"/>
+        <result column="fDisplayorder" property="fDisplayorder"/>
+        <result column="fParentName" property="fParentName"/>
+        <result column="fIsInit" property="fIsInit"/>
+        <!--关联user表查询出用户名-->
+        <result column="fCreatorName" property="fCreatorName"/>
+        <result column="fLastUpdateUserName" property="fLastUpdateUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fName, fNumber, fLongNumber, fParentID, fDescription, fIsRoot, fLevel, fLink, fIcon, fDisplayorder, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime, fIsInit
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fName, t.fNumber, t.fLongNumber, t.fParentID, t.fDescription, t.fIsRoot, t.fLevel, t.fLink, t.fIcon, t.fDisplayorder, t.fCreatorID, t.fCreateTime, t.fLastUpdateUserID, t.fLastUpdateTime, t.fIsInit
+    </sql>
+
+
+
+    <select id="selectMenulistByUserID" resultMap="MenuResultMap" parameterType="string">
+        select
+        <include refid="Base_Column_List"/>
+        from (
+        select menu.*,menurights.fRightID
+        from T_BD_MAINMENUITEM menu
+        left join T_BD_MENURIGHTS menurights on menurights.FMainMenuItemID = menu.FID
+        ) t1
+        where exists (
+        select 1 from
+        (
+        select fRightID
+        from t_bd_userrights
+        where fUserID = #{fID}
+        union
+        select userrights.fRightID
+        from t_bd_userrole userrole
+        left join t_bd_rolerights userrights on userrole.fRoleID = userrights.fRoleID
+        where userrole.fUserID = #{fID}
+        ) t2
+        where t1.fRightID = t2.fRightID
+        )
+        order by fIsRoot asc,flevel asc,fDisplayorder asc
+    </select>
+
+    <select id="selectMenuList" resultMap="MenuResultMap" parameterType="araFwMenu">
+        select t3.fName as fParentName,t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from t_bd_mainmenuitem t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        left join t_bd_mainmenuitem t3 on t3.fID = t.fParentID
+        where t.fIsRoot = 0 and t.fParentID is not null
+        <if test="fName != null and fName != ''">
+            and t.fName = #{fName}
+        </if>
+        <if test="fNumber != null and fNumber != ''">
+            and t.fNumber = #{fNumber}
+        </if>
+        <if test="fID != null and fID != ''">
+            and (t.fID = #{fID} or t.fParentID = #{fID})
+        </if>
+        <if test="queryCreateTimeStart != null">
+            and t.fCreateTime >= #{queryCreateTimeStart}
+        </if>
+        <if test="queryCreateTimeEnd != null">
+            <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+            ]]>
+        </if>
+        <if test="queryUpdateTimeStart != null">
+            and t.fLastUpdateTime >= #{queryUpdateTimeStart}
+        </if>
+        <if test="queryUpdateTimeEnd != null">
+            <![CDATA[
+                and t.fLastUpdateTime <= #{queryUpdateTimeEnd}
+            ]]>
+        </if>
+    </select>
+
+    <select id="selectMenuTreeList" resultType="araFwMenuTree">
+        select t1.fName as fParentName,t.* from (
+            select fID, fName, fNumber, fLongNumber, fParentID, fDescription, fIsRoot, fLevel, fLink, fIcon, fDisplayorder, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime,
+                fID as fMainMenuItemID,null as fRightID,null as fRightCode,'1' as nodeType,0 as hasRight,fIsInit
+            from t_bd_mainmenuitem t
+            union all
+            select fID, fRightName as fName, null as fNumber, null as fLongNumber, fMainMenuItemID as fParentID,
+                null as fDescription, null as fIsRoot, null as fLevel, null as fLink, null as fIcon, null as fDisplayorder,
+                null as fCreatorID, null as fCreateTime, null as fLastUpdateUserID, null as fLastUpdateTime,
+                fMainMenuItemID,fID as fRightID,fRightCode,'2' as nodeType,0 as hasRight,fIsInit
+                from t_bd_menurights ) t
+        left join t_bd_mainmenuitem t1 on t1.fID = t.fParentID
+    </select>
+
+    <select id="selectRootMenuRightIDList" resultType="string">
+        select t2.fRightID
+        from t_bd_mainmenuitem t1
+        left join t_bd_menurights t2 on t1.fID = t2.fMainMenuItemID
+        where t1.fIsRoot = 0
+    </select>
+
+    <select id="selectCountReference" resultType="java.lang.Integer">
+        select count(1) as referenceNum from (
+            select fID from t_bd_menurights where fMainMenuItemID = #{menuID}
+            union all
+            select fID from t_bd_userrights where fMainMenuItemID = #{menuID}
+            union all
+            select fID from t_bd_rolerights where fMainMenuItemID = #{menuID}
+            union all
+            select fID from t_bd_mainmenuitem where fParentid = #{menuID}
+        ) t
+    </select>
+
+    <select id="selectMenuByNumber" resultMap="MenuResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_bd_mainmenuitem
+        where fNumber = #{fNumber}
+    </select>
+
+
+    <update id="updateMenuInfo" parameterType="araFwMenu">
+        update t_bd_mainmenuitem
+        set
+            fNumber = #{fNumber},
+            fName = #{fName},
+            fLongNumber = #{fLongNumber},
+            fParentID = #{fParentID},
+            fDescription = #{fDescription},
+            fIsRoot = #{fIsRoot},
+            fLevel = #{fLevel},
+            fLink = #{fLink},
+            fIcon = #{fIcon},
+            fDisplayorder = #{fDisplayorder},
+            fLastUpdateUserID = #{currentUserID},
+            fLastUpdateTime = #{currentUserOperationTime}
+        where fID = #{fID}
+        and fIsInit = 0
+    </update>
+
+    <delete id="deleteMenuByID">
+        delete from t_bd_mainmenuitem where fID = #{menuID} and fIsInit = 0
+    </delete>
+
+</mapper>

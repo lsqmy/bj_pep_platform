@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.MenuRightDAO">
+
+    <resultMap id="MenuRightResultMap" type="araFwMenuRight">
+        <id column="fID" property="fID"/>
+        <result column="fMainMenuItemID" property="fMainMenuItemID"/>
+        <result column="fRightCode" property="fRightCode"/>
+        <result column="fRightName" property="fRightName"/>
+        <result column="fDescription" property="fDescription"/>
+        <result column="fDescription" property="fDescription"/>
+        <result column="fCreatorID" property="fCreatorID"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime"/>
+        <result column="fMainMenuItemName" property="fMainMenuItemName"/>
+        <result column="fMainMenuItemNumber" property="fMainMenuItemNumber"/>
+        <result column="fIsInit" property="fIsInit"/>
+        <!--关联user表查询出用户名-->
+        <result column="fCreatorName" property="fCreatorName"/>
+        <result column="fLastUpdateUserName" property="fLastUpdateUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fMainMenuItemID, fRightCode, fRightName, fDescription, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime, fIsInit
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fMainMenuItemID, t.fRightCode, t.fRightName, t.fDescription, t.fCreatorID, t.fCreateTime, t.fLastUpdateUserID, t.fLastUpdateTime, t.fIsInit
+    </sql>
+
+
+    <select id="selectMenuRightList" resultMap="MenuRightResultMap">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        t3.fName as fMainMenuItemName,t3.fNumber as fMainMenuItemNumber,
+        <include refid="Base_Column_List_t"/>
+        from t_bd_menurights t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        left join t_bd_mainmenuitem t3 on t3.fID = t.fMainMenuItemID
+        <where>
+            <if test="fRightCode != null and fRightCode != ''">
+                and t.fRightCode = #{fRightCode}
+            </if>
+            <if test="fRightName != null and fRightName != ''">
+                and t.fRightName = #{fRightName}
+            </if>
+            <if test="fMainMenuItemID != null and fMainMenuItemID != ''">
+                and t.fMainMenuItemID = #{fMainMenuItemID}
+            </if>
+            <if test="fMainMenuItemName != null and fMainMenuItemName != ''">
+                and t3.fName = #{fMainMenuItemName}
+            </if>
+            <if test="fMainMenuItemNumber != null and fMainMenuItemNumber != ''">
+                and t3.fNumber = #{fMainMenuItemNumber}
+            </if>
+            <if test="queryCreateTimeStart != null">
+                and t.fCreateTime >= #{queryCreateTimeStart}
+            </if>
+            <if test="queryCreateTimeEnd != null">
+                <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+            ]]>
+            </if>
+            <if test="queryUpdateTimeStart != null">
+                and t.fLastUpdateTime >= #{queryUpdateTimeStart}
+            </if>
+            <if test="queryUpdateTimeEnd != null">
+                <![CDATA[
+                and t.fLastUpdateTime <= #{queryUpdateTimeEnd}
+            ]]>
+            </if>
+        </where>
+    </select>
+
+    <select id="selectCountReference" parameterType="list" resultType="java.lang.Integer">
+        select count(1) as referenceNum from (
+            select fID from t_bd_rolerights where fRightID in
+            <foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            union all
+            select fID from t_bd_userrights where fRightID in
+            <foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        ) t
+    </select>
+
+    <select id="selectMenuRightListForTree" resultType="com.aratek.framework.domain.core.MenuRightTree">
+        select t.fID as fRightID, t.fMainMenuItemID, t.fRightCode, t.fRightName, t.fDescription,
+        t1.fParentID,
+        0 as hasRight
+        from t_bd_menurights t
+        left join t_bd_mainmenuitem t1 on t.fMainMenuItemID = t1.fID
+    </select>
+
+    <select id="selectMenuRightListForTreeByRoleID" resultType="com.aratek.framework.domain.core.MenuRightTree">
+        select t.fID as fRightID, t.fMainMenuItemID, t.fRightCode, t.fRightName, t.fDescription,
+        t1.fParentID,
+        case when t2.fID is not null then 1 else 0 end as hasRight
+        from t_bd_menurights t
+        left join t_bd_mainmenuitem t1 on t.fMainMenuItemID = t1.fID
+        left join (select * from t_bd_rolerights where fRoleID = #{roleID}) t2 on t.fID = t2.fRightID
+    </select>
+
+    <select id="selectMenuRightListForTreeByUserID" resultType="com.aratek.framework.domain.core.MenuRightTree">
+        select t.fID as fRightID, t.fMainMenuItemID, t.fRightCode, t.fRightName, t.fDescription,
+        t1.fParentID,
+        case when t2.fID is not null then 1 else 0 end as hasRight
+        from t_bd_menurights t
+        left join t_bd_mainmenuitem t1 on t.fMainMenuItemID = t1.fID
+        left join (select * from t_bd_userrights where fUserID = #{userID}) t2 on t.fID = t2.fRightID
+    </select>
+
+    <insert id="insertMenuRightList" parameterType="list">
+        <foreach collection="list" item="item" index="index" separator=";">
+            insert into t_bd_menurights (
+            <include refid="Base_Column_List"/>
+            ) values (
+            #{item.fID},#{item.fMainMenuItemID},#{item.fRightCode},#{item.fRightName},#{item.fParentID},
+            #{item.fDescription},#{item.fCreatorID},#{item.fCreateTime},#{item.fLastUpdateUserID},#{item.fLastUpdateTime}
+            ,0
+            )
+        </foreach>
+    </insert>
+
+    <insert id="insertMenuRightList" parameterType="list" databaseId="oracle">
+        begin
+        <foreach collection="list" item="item" index="index" separator=";">
+            insert into t_bd_menurights (
+            <include refid="Base_Column_List"/>
+            ) values (
+            #{item.fID},#{item.fMainMenuItemID},#{item.fRightCode},#{item.fRightName},#{item.fParentID},
+            #{item.fDescription},#{item.fCreatorID},#{item.fCreateTime},#{item.fLastUpdateUserID},#{item.fLastUpdateTime}
+            ,0
+            )
+        </foreach>
+        ;end;
+    </insert>
+
+    <update id="updateMenuRight">
+        update t_bd_menurights
+        set
+            fRightCode = #{fRightCode},
+            fRightName = #{fRightName},
+            fDescription = #{fDescription},
+            fLastUpdateUserID = #{currentUserID},
+            fLastUpdateTime = #{currentUserOperationTime}
+        where fID = #{fID}
+        and fIsInit = 0
+    </update>
+
+    <delete id="deleteMenuRightBatch" parameterType="list">
+        delete from t_bd_menurights where fID in
+        <foreach collection="list" item="item" index="index" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+        and fIsInit = 0
+    </delete>
+
+
+</mapper>

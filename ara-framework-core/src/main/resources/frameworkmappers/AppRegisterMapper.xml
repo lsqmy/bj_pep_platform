@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.aratek.framework.core.dao.AppRegisterDAO">
+    <resultMap id="AppRegisterResultMap" type="araFwAppRegister">
+        <id column="fID" property="fID"/>
+        <result column="fAppID" property="fAppID"/>
+        <result column="fAppName" property="fAppName"/>
+        <result column="fSecretKey" property="fSecretKey"/>
+        <result column="fStatus" property="fStatus"/>
+        <result column="fDescription" property="fDescription"/>
+        <result column="fCreatorID" property="fCreatorID"/>
+        <result column="fCreateTime" property="fCreateTime"/>
+        <result column="fLastUpdateUserID" property="fLastUpdateUserID"/>
+        <result column="fLastUpdateTime" property="fLastUpdateTime"/>
+        <!--关联user表查询出用户名-->
+        <result column="fCreatorName" property="fCreatorName"/>
+        <result column="fLastUpdateUserName" property="fLastUpdateUserName"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        fID, fAppID, fAppName, fSecretKey, fStatus, fDescription, fCreatorID, fCreateTime, fLastUpdateUserID, fLastUpdateTime
+    </sql>
+
+    <sql id="Base_Column_List_t">
+        t.fID, t.fAppID, t.fAppName, t.fSecretKey, t.fStatus, t.fDescription, t.fCreatorID, t.fCreateTime, t.fLastUpdateUserID, t.fLastUpdateTime
+    </sql>
+
+    <select id="selectAppRegisterList" resultMap="AppRegisterResultMap" parameterType="araFwAppRegister">
+        select t1.fName as fCreatorName,t2.fName as fLastUpdateUserName,
+        <include refid="Base_Column_List_t"/>
+        from t_bd_appregister t
+        left join T_BD_USER t1 on t1.fID = t.fCreatorID
+        left join T_BD_USER t2 on t2.fID = t.fLastUpdateUserID
+        <where>
+            <if test="fAppName != null and fAppName != ''">
+                <choose>
+                    <when test="_databaseId == 'sqlserver'">
+                        and t.fAppName like '%'+#{fAppName}+'%'
+                    </when>
+                    <otherwise>
+                        and t.fAppName like concat(concat('%',#{fAppName}),'%')
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="fAppID != null and fAppID != ''">
+                and t.fAppID = #{fAppID}
+            </if>
+            <if test="fStatus != null">
+                and t.fStatus = #{fStatus}
+            </if>
+            <if test="queryCreateTimeStart != null">
+                and t.fCreateTime >= #{queryCreateTimeStart}
+            </if>
+            <if test="queryCreateTimeEnd != null">
+                <![CDATA[
+                and t.fCreateTime <= #{queryCreateTimeEnd}
+                ]]>
+            </if>
+            <if test="queryUpdateTimeStart != null">
+                and t.fLastUpdateTime >= #{queryUpdateTimeStart}
+            </if>
+            <if test="queryUpdateTimeEnd != null">
+                <![CDATA[
+                and t.fLastUpdateTime <= #{queryUpdateTimeEnd}
+                ]]>
+            </if>
+        </where>
+    </select>
+
+    <select id="selectAppRegisterByID" resultMap="AppRegisterResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_bd_appregister
+        where fID = #{id}
+    </select>
+
+    <select id="selectAppRegisterByAppID" resultMap="AppRegisterResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_bd_appregister
+        where fAppID = #{id}
+    </select>
+
+    <select id="selectAppRegisterByIDAndSecretKey" resultMap="AppRegisterResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_bd_appregister
+        where fAppID = #{fAppID}
+        and fSecretKey = #{fSecretKey}
+    </select>
+
+    <insert id="insertAppRegister" parameterType="araFwAppRegister">
+        insert into t_bd_appregister (
+        <include refid="Base_Column_List"/>
+        ) values (
+        #{fID},
+        #{fAppID},
+        #{fAppName},
+        #{fSecretKey},
+        #{fStatus},
+        #{fDescription},
+        #{currentUserID},
+        #{currentUserOperationTime},
+        #{currentUserID},
+        #{currentUserOperationTime}
+        )
+    </insert>
+
+    <update id="updateAppRegister" parameterType="araFwAppRegister">
+        update t_bd_appregister set
+            fAppID = #{fAppID},
+            fAppName = #{fAppName},
+            fSecretKey = #{fSecretKey},
+            fDescription = #{fDescription},
+            fLastUpdateUserID = #{currentUserID},
+            fLastUpdateTime = #{currentUserOperationTime}
+        where fID = #{fID}
+    </update>
+
+    <update id="updateAppRegisterStatusBatch" parameterType="list">
+        <foreach collection="list" item="item" index="index" separator=";">
+            update t_bd_appregister set
+            fStatus = #{item.fStatus},
+            fLastUpdateUserID = #{item.currentUserID},
+            fLastUpdateTime = #{item.currentUserOperationTime}
+            where fID = #{item.fID}
+        </foreach>
+    </update>
+
+    <update id="updateAppRegisterStatusBatch" parameterType="list" databaseId="oracle">
+        begin
+        <foreach collection="list" item="item" index="index" separator=";">
+            update t_bd_appregister set
+            fStatus = #{item.fStatus},
+            fLastUpdateUserID = #{item.currentUserID},
+            fLastUpdateTime = #{item.currentUserOperationTime}
+            where fID = #{item.fID}
+        </foreach>
+        ;end;
+    </update>
+
+    <delete id="deleteAppRegisterByID" parameterType="string">
+        delete from t_bd_appregister where fID = #{id};
+    </delete>
+
+    <delete id="deleteAppRegisterBatch" parameterType="list">
+        delete from t_bd_appregister where fID in
+        <foreach collection="list" item="item" index="index" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+</mapper>
